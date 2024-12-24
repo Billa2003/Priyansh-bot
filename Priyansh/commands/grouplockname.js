@@ -1,16 +1,16 @@
 module.exports.config = {
 	name: "grouplockname",
-	version: "1.0.0",
-	hasPermssion: 2, // Only admins can use this command
+	version: "1.0.1",
+	hasPermssion: 2, // Only admins can lock the name
 	credits: "Amir",
-	description: "Lock your group name",
+	description: "Lock the group name to prevent changes",
 	commandCategory: "Box",
 	usages: "grouplockname [on/off] [group name]",
 	cooldowns: 5,
 	dependencies: []
 };
 
-const lockedGroups = {}; // To store locked group names
+const lockedGroups = {}; // Stores locked group names
 
 module.exports.run = async function({ api, event, args }) {
 	const threadID = event.threadID;
@@ -42,18 +42,25 @@ module.exports.run = async function({ api, event, args }) {
 	}
 };
 
-module.exports.handleEvent = function({ api, event }) {
+module.exports.handleEvent = async function({ api, event }) {
 	if (event.logMessageType === "log:thread-name") {
 		const threadID = event.threadID;
 		const lockedName = lockedGroups[threadID];
 
-		// If the group name is locked, revert the change
+		// Check if a name is locked for the group
 		if (lockedName && event.logMessageData.name !== lockedName) {
+			// Revert the name back to the locked name
 			api.setTitle(lockedName, threadID, (err) => {
 				if (!err) {
-					api.sendMessage("❌ Group name change reverted.", threadID);
+					api.sendMessage(`❌ Group name change detected! Reverting to locked name: "${lockedName}"`, threadID);
+				} else {
+					api.sendMessage("❌ Failed to revert the group name. Please check bot permissions.", threadID);
 				}
 			});
 		}
 	}
+};
+
+module.exports.handleReply = async function() {
+	// No handleReply needed for this command
 };
